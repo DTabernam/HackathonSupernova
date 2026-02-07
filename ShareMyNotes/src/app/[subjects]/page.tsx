@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Button } from '@/components/Button/Button'
 import { appName } from '@/lib/constants'
 
-// Lecture-Daten für jedes Subject
+// Lecture data for each subject
 const lectureData: Record<string, string[]> = {
   'linear-algebra': ['Vectors & Matrices', 'Eigenvalues', 'Linear Transformations', 'Determinants'],
   'calculus': ['Limits', 'Derivatives', 'Integrals', 'Series'],
@@ -18,7 +18,7 @@ const lectureData: Record<string, string[]> = {
   'numerical-methods': ['Root Finding', 'Interpolation', 'Integration', 'ODEs'],
 }
 
-// Schöne Namen für die Subjects
+// Display names for subjects
 const subjectNames: Record<string, string> = {
   'linear-algebra': 'Linear Algebra',
   'calculus': 'Calculus',
@@ -33,7 +33,7 @@ const subjectNames: Record<string, string> = {
 
 export default function SubjectLecturesPage() {
   const params = useParams()
-  const subject = params.subjects as string  // z.B. "linear-algebra"
+  const subject = params.subjects as string
   
   const lectures = lectureData[subject] || []
   const subjectName = subjectNames[subject] || subject
@@ -82,14 +82,3 @@ export default function SubjectLecturesPage() {
     </div>
   )
 }
-
-
-
-/*
-
-this is a file insdie [subjects] folder and was made as a dynamic router to each fo the subjects pages in the website....
-
-basic structure and workings:
-- 
-
-*/

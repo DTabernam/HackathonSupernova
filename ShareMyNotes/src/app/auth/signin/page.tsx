@@ -17,7 +17,7 @@ export default function SignInPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const redirect = searchParams.get('redirect') || '/courses'
+  const redirect = searchParams.get('redirect') || '/home'
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()

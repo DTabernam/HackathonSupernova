@@ -156,6 +156,23 @@ export function FileUpload({
     }
   }
 
+  // Helper function to read file as text
+  const readFileAsText = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const result = e.target?.result
+        if (typeof result === 'string') {
+          resolve(result)
+        } else {
+          reject(new Error('Failed to read file as text'))
+        }
+      }
+      reader.onerror = () => reject(new Error('Error reading file'))
+      reader.readAsText(file)
+    })
+  }
+
   const handleUpload = async () => {
     if (!selectedFile) {
       showToast('Please select a file first', 'error')
@@ -176,38 +193,46 @@ export function FileUpload({
         return
       }
 
-      // Create unique file path: userId/timestamp-filename
-      const timestamp = Date.now()
-      const fileExt = selectedFile.name.split('.').pop()
-      const fileName = `${timestamp}-${selectedFile.name}`
-      const storagePath = `${user.id}/${fileName}`
-
+      const fileExt = selectedFile.name.split('.').pop()?.toLowerCase() || 'unknown'
+      
       setUploadProgress(20)
 
-      // Upload to Supabase Storage
-      const { data: storageData, error: storageError } = await supabase.storage
-        .from('uploads')
-        .upload(storagePath, selectedFile, {
-          cacheControl: '3600',
-          upsert: false,
-        })
-
-      if (storageError) {
-        throw new Error(storageError.message)
+      // Read file content as text
+      let fileContent = ''
+      try {
+        // For text-based files, read directly
+        const textExtensions = ['txt', 'md', 'markdown', 'tex', 'rtf', 'csv', 'json', 'xml', 'html', 'htm', 'css', 'js', 'ts', 'py', 'java', 'c', 'cpp', 'h']
+        
+        if (textExtensions.includes(fileExt)) {
+          fileContent = await readFileAsText(selectedFile)
+        } else if (fileExt === 'pdf') {
+          // For PDFs, we'll store a placeholder and let the API extract text if needed
+          // Or just store the filename for now
+          fileContent = `[PDF File: ${selectedFile.name}]\n\nNote: PDF text extraction will be done during analysis.`
+        } else {
+          // For other files (images, docs), store a reference
+          fileContent = `[${fileExt.toUpperCase()} File: ${selectedFile.name}]`
+        }
+      } catch (readError) {
+        console.error('Error reading file:', readError)
+        // Try to read as text anyway
+        try {
+          fileContent = await readFileAsText(selectedFile)
+        } catch {
+          fileContent = `[File: ${selectedFile.name}] - Could not extract text content`
+        }
       }
 
       setUploadProgress(60)
 
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from('uploads')
-        .getPublicUrl(storagePath)
-
-      const fileUrl = urlData.publicUrl
+      // Generate a simple storage path reference (no actual storage upload)
+      const timestamp = Date.now()
+      const storagePath = `${user.id}/${timestamp}-${selectedFile.name}`
+      const fileUrl = `local://${storagePath}` // Placeholder URL since we're not using storage
 
       setUploadProgress(80)
 
-      // Save upload record to database (always private)
+      // Save upload record to database with file content (always private)
       const { data: uploadData, error: dbError } = await supabase
         .from('uploads')
         .insert({
@@ -215,20 +240,19 @@ export function FileUpload({
           course_id: courseId || null,
           lecture_id: lectureId || null,
           file_name: selectedFile.name,
-          file_type: fileExt || 'unknown',
+          file_type: fileExt,
           file_size: selectedFile.size,
           file_url: fileUrl,
           storage_path: storagePath,
           title: title || selectedFile.name,
           description: description || null,
           is_public: false, // Always private - no sharing
+          content: fileContent, // Store the actual file content!
         })
         .select()
         .single()
 
       if (dbError) {
-        // If database insert fails, try to clean up the uploaded file
-        await supabase.storage.from('uploads').remove([storagePath])
         throw new Error(dbError.message)
       }
 

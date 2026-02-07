@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { Button } from '@/components/Button/Button'
 import { Icon } from '@/components/Icon/Icon'
+import { UserMenu } from '@/components/UserMenu'
 import { appName, appDescription } from '@/lib/constants'
 
 
@@ -22,8 +23,16 @@ export default function SubjectsPage() {
   
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      
+      {/* Header with Profile Menu */}
+      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
+        <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
+          <Link href="/home" className="flex items-center gap-2">
+            <Icon name="book" size={24} className="text-accent-blue" />
+            <span className="font-bold text-xl text-text-primary">{appName}</span>
+          </Link>
+          <UserMenu />
+        </div>
+      </header>
 
       {/* Hero Section */}
       <main className="px-6 py-16 max-w-6xl mx-auto">

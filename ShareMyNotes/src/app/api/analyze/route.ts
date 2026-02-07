@@ -1,54 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
-import { processWithLangflow } from '@/lib/langflow'
+import { analyzeNotesWithAI } from '@/lib/ai'
 import { NextRequest, NextResponse } from 'next/server'
 
-/**
- * Fetch file content from Supabase Storage
- * For text files, returns the content directly
- * For PDFs/images, we'd need additional processing (not implemented yet)
- */
-async function getFileContent(fileUrl: string, fileType: string): Promise<string | null> {
-  try {
-    // For text-based files, fetch and return content
-    if (fileType.includes('text') || 
-        fileType.includes('markdown') || 
-        fileType.includes('json') ||
-        fileType.includes('csv')) {
-      const response = await fetch(fileUrl)
-      if (!response.ok) return null
-      return await response.text()
-    }
-    
-    // For PDFs - you'd need a PDF parser like pdf-parse
-    // For now, we return a placeholder message
-    if (fileType.includes('pdf')) {
-      // TODO: Implement PDF parsing
-      // const pdfParse = require('pdf-parse')
-      // const response = await fetch(fileUrl)
-      // const buffer = await response.arrayBuffer()
-      // const data = await pdfParse(Buffer.from(buffer))
-      // return data.text
-      return `[PDF file content - PDF parsing not yet implemented. File URL: ${fileUrl}]`
-    }
-    
-    // For images - you'd need OCR or multimodal AI
-    if (fileType.includes('image')) {
-      return `[Image file - requires OCR or multimodal analysis. File URL: ${fileUrl}]`
-    }
-    
-    return null
-  } catch (error) {
-    console.error('Error fetching file content:', error)
-    return null
-  }
-}
-
-// POST /api/analyze - Analyze an uploaded file with Langflow
+// POST /api/analyze - Analyze an uploaded file with AI
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     const body = await request.json()
-    const { uploadId } = body
+    const { uploadId, courseContent } = body // Optional course content for context
 
     if (!uploadId) {
       return NextResponse.json({ error: 'Upload ID required' }, { status: 400 })
@@ -60,12 +19,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get the upload (verify ownership)
+    // Get the upload (verify ownership) - includes content field
     const { data: upload, error: uploadError } = await supabase
       .from('uploads')
       .select('*')
       .eq('id', uploadId)
-      .eq('user_id', user.id) // Only allow analyzing own uploads
+      .eq('user_id', user.id)
       .single()
 
     if (uploadError || !upload) {
@@ -75,37 +34,42 @@ export async function POST(request: NextRequest) {
     // Check if feedback already exists
     const { data: existingFeedback } = await supabase
       .from('feedback')
-      .select('id')
+      .select('*')
       .eq('upload_id', uploadId)
       .single()
 
     if (existingFeedback) {
-      return NextResponse.json({ 
-        error: 'Feedback already exists for this upload',
-        feedbackId: existingFeedback.id 
-      }, { status: 409 })
+      // Return existing feedback instead of error
+      return NextResponse.json({
+        success: true,
+        feedback: {
+          id: existingFeedback.id,
+          annotatedNotes: existingFeedback.feedback_content,
+          createdAt: existingFeedback.created_at,
+        },
+        cached: true,
+      })
     }
 
-    // Fetch the actual file content
-    const fileContent = await getFileContent(upload.file_url, upload.file_type)
+    // Get file content directly from database
+    const fileContent = upload.content
     
     if (!fileContent) {
       return NextResponse.json({ 
-        error: 'Could not read file content. Only text files are currently supported.' 
+        error: 'No content found for this upload. Please re-upload the file.' 
       }, { status: 400 })
     }
 
-    // Call Langflow to analyze the file content
-    const langflowResult = await processWithLangflow({
-      fileContent: fileContent,
-      fileName: upload.file_name,
-      fileType: upload.file_type,
-      userId: user.id,
+    // Call AI to analyze the notes
+    const aiResult = await analyzeNotesWithAI({
+      notes: fileContent,
+      context: courseContent || undefined,
+      courseTitle: upload.title,
     })
 
-    if (!langflowResult.success) {
+    if (!aiResult.success) {
       return NextResponse.json({ 
-        error: langflowResult.error || 'Failed to analyze file' 
+        error: aiResult.error || 'Failed to analyze notes' 
       }, { status: 500 })
     }
 
@@ -115,55 +79,31 @@ export async function POST(request: NextRequest) {
       .insert({
         user_id: user.id,
         upload_id: uploadId,
-        feedback_type: 'ai-analysis',
-        feedback_content: langflowResult.feedback || 'No feedback generated',
-        suggestions: langflowResult.suggestions || [],
-        score: langflowResult.correctnessScore || null,
+        feedback_type: 'ai-annotation',
+        feedback_content: aiResult.annotatedNotes,
       })
       .select()
       .single()
 
     if (feedbackError) {
       console.error('Error saving feedback:', feedbackError)
-      return NextResponse.json({ error: 'Failed to save feedback' }, { status: 500 })
+      // Still return the analysis even if saving failed
+      return NextResponse.json({
+        success: true,
+        feedback: {
+          annotatedNotes: aiResult.annotatedNotes,
+        },
+        saved: false,
+      })
     }
-
-    // Also store summary if we got key points and topics
-    if (langflowResult.keyPoints?.length || langflowResult.topics?.length) {
-      await supabase
-        .from('summaries')
-        .insert({
-          user_id: user.id,
-          upload_id: uploadId,
-          summary_text: langflowResult.feedback || '',
-          key_points: langflowResult.keyPoints || [],
-          topics: langflowResult.topics || [],
-          model_used: 'langflow',
-        })
-    }
-
-    // Log activity
-    await supabase.from('activity_log').insert({
-      user_id: user.id,
-      action_type: 'analyze',
-      target_type: 'upload',
-      target_id: uploadId,
-      metadata: { 
-        score: langflowResult.correctnessScore,
-        has_suggestions: (langflowResult.suggestions?.length || 0) > 0
-      }
-    })
 
     return NextResponse.json({
       success: true,
       feedback: {
         id: feedback.id,
-        content: langflowResult.feedback,
-        score: langflowResult.correctnessScore,
-        suggestions: langflowResult.suggestions,
-        keyPoints: langflowResult.keyPoints,
-        topics: langflowResult.topics,
-      }
+        annotatedNotes: aiResult.annotatedNotes,
+        createdAt: feedback.created_at,
+      },
     })
 
   } catch (error) {

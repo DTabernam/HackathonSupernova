@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { FileUpload, AIFeedback } from '@/components/FileUpload'
@@ -14,7 +14,9 @@ type Tab = 'upload' | 'my-notes'
 
 export default function UploadPage() {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<Tab>('upload')
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get('tab')
+  const [activeTab, setActiveTab] = useState<Tab>(tabParam === 'my-notes' ? 'my-notes' : 'upload')
   const [user, setUser] = useState<{ id: string; email: string } | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
@@ -23,6 +25,13 @@ export default function UploadPage() {
   useEffect(() => {
     checkUser()
   }, [])
+
+  // Update tab when URL param changes
+  useEffect(() => {
+    if (tabParam === 'my-notes') {
+      setActiveTab('my-notes')
+    }
+  }, [tabParam])
 
   const checkUser = async () => {
     const supabase = createClient()
@@ -56,10 +65,20 @@ export default function UploadPage() {
       {/* Header */}
       <header className="border-b-2 border-text-primary bg-background sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-text-primary">
-            <Icon name="book" size={28} />
-            <span className="text-xl font-bold">{appName}</span>
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link 
+              href="/home" 
+              className="flex items-center justify-center w-10 h-10 rounded-full text-text-secondary hover:text-text-primary hover:bg-background-muted transition-all duration-200"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </Link>
+            <Link href="/home" className="flex items-center gap-2 text-text-primary">
+              <Icon name="book" size={28} />
+              <span className="text-xl font-bold">{appName}</span>
+            </Link>
+          </div>
 
           <div className="flex items-center gap-4">
             <span className="text-sm text-text-secondary">{user?.email}</span>

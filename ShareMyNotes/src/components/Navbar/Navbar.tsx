@@ -1,36 +1,79 @@
+'use client'
+
 import Link from 'next/link'
-import { Button } from '@/components/Button/Button'
+import { usePathname } from 'next/navigation'
 import { Icon } from '@/components/Icon/Icon'
-import { appName } from '@/lib/constants'
 
 export function Navbar() {
+  const pathname = usePathname()
+  
+  // Determine active tab based on pathname
+  const isActive = (path: string) => pathname?.includes(path)
+
   return (
-    <nav className="bg-gray-400 flex items-center justify-between w-full mx-auto">
-        <div className="flex gap-auto size-full text-center">
-            <Link href="..\" className="hover:bg-slate-300 flex w-20 justify-center items-center flex-shrink-0">
-                <span className="flex justify-center items-center">
-                    <p className="font-semibold text-3xl">←</p>
-                </span>
-            </Link>
-            <Link href=".\notes" className="hover:bg-slate-300 border-l-4 px-4 border-solid border-black flex flex-1 justify-center items-center">
-                <span className="flex justify-center items-center">
-                    <Icon name="edit" size={28} />
-                    <p className="font-semibold text-xl">Notes</p>
-                </span>
-            </Link>
-            <Link href=".\report" className="hover:bg-slate-300 py-4 border-x-4 px-4 border-solid border-black flex flex-1 justify-center items-center">
-                <span className="flex justify-center items-center">
-                    <Icon name="eye" size={28} />
-                    <p className="font-semibold text-xl">Report</p>
-                </span>
-            </Link>
-            <Link href=".\course_docs" className="hover:bg-slate-300 flex flex-1 justify-center items-center">
-                <span className="flex justify-center items-center">
-                    <Icon name="book" size={28} />
-                    <p className="font-semibold text-xl">Course Material</p>
-                </span>
-            </Link>
+    <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border shadow-sm">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-stretch h-14">
+          {/* Back Button */}
+          <Link 
+            href="/home" 
+            className="flex items-center justify-center w-14 text-text-secondary hover:text-text-primary hover:bg-background-muted/50 transition-all duration-200 border-r border-border-light group"
+          >
+            <svg 
+              className="w-5 h-5 transform group-hover:-translate-x-0.5 transition-transform" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </Link>
+
+          {/* Navigation Links */}
+          <div className="flex flex-1">
+            <NavLink href="./notes" icon="edit" label="Notes" isActive={isActive('/notes')} />
+            <NavLink href="./report" icon="eye" label="Report" isActive={isActive('/report')} />
+            <NavLink href="./course_docs" icon="book" label="Course Material" isActive={isActive('/course_docs')} />
+          </div>
         </div>
+      </div>
     </nav>
+  )
+}
+
+function NavLink({ 
+  href, 
+  icon, 
+  label, 
+  isActive 
+}: { 
+  href: string
+  icon: 'edit' | 'eye' | 'book' | 'upload' | 'users' | 'message'
+  label: string
+  isActive: boolean
+}) {
+  return (
+    <Link 
+      href={href} 
+      className={`
+        flex-1 flex items-center justify-center gap-2 px-4 
+        border-r border-border-light last:border-r-0
+        transition-all duration-200 relative
+        ${isActive 
+          ? 'text-text-primary bg-background-subtle' 
+          : 'text-text-secondary hover:text-text-primary hover:bg-background-muted/30'
+        }
+      `}
+    >
+      <Icon name={icon} size={20} className={isActive ? 'text-accent-blue' : ''} />
+      <span className={`font-medium text-sm ${isActive ? 'text-text-primary' : ''}`}>
+        {label}
+      </span>
+      
+      {/* Active indicator */}
+      {isActive && (
+        <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-accent-blue rounded-full" />
+      )}
+    </Link>
   )
 }

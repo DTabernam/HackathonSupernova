@@ -72,8 +72,9 @@ CREATE TABLE IF NOT EXISTS public.uploads (
   file_name TEXT NOT NULL,
   file_type TEXT NOT NULL, -- e.g., 'pdf', 'docx', 'png', 'jpg', 'txt'
   file_size INTEGER, -- Size in bytes
-  file_url TEXT NOT NULL, -- Supabase Storage URL
-  storage_path TEXT NOT NULL, -- Path in Supabase Storage bucket
+  file_url TEXT NOT NULL, -- URL reference (can be local:// for text-stored files)
+  storage_path TEXT NOT NULL, -- Path reference
+  content TEXT, -- ⭐ NEW: Store file content directly as text
   
   -- Metadata
   title TEXT, -- User-given title
