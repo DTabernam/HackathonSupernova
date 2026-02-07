@@ -8,7 +8,24 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation */}
-      <Navbar/>
+      <nav className="px-6 py-4 flex items-center justify-between max-w-6xl mx-auto">
+      <Link href="/" className="flex items-center gap-2 text-text-primary">
+        <Icon name="book" size={28} />
+        <span className="text-xl font-bold">{appName}</span>
+      </Link>
+      <div className="flex items-center gap-4">
+        <Link href="/auth/signin">
+          <Button variant="ghost" size="sm">
+            Sign In
+          </Button>
+        </Link>
+        <Link href="/auth/signup">
+          <Button size="sm">
+            Get Started
+          </Button>
+        </Link>
+      </div>
+    </nav>
 
       {/* Hero Section */}
       <main className="px-6 py-16 max-w-6xl mx-auto">
