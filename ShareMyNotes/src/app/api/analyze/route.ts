@@ -2,15 +2,38 @@ import { createClient } from '@/lib/supabase/server'
 import { analyzeNotesWithAI } from '@/lib/ai'
 import { NextRequest, NextResponse } from 'next/server'
 
-// POST /api/analyze - Analyze an uploaded file with AI
+// POST /api/analyze - Analyze notes with AI
+// Can accept either uploadId (to analyze an uploaded file) or notes directly
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     const body = await request.json()
-    const { uploadId, courseContent } = body // Optional course content for context
+    const { uploadId, courseContent, notes, subject } = body
 
+    // If notes are provided directly, analyze them without needing uploadId
+    if (notes) {
+      // Call AI to analyze the notes
+      const aiResult = await analyzeNotesWithAI({
+        notes: notes,
+        context: courseContent || undefined,
+        courseTitle: subject || 'Notes',
+      })
+
+      if (!aiResult.success) {
+        return NextResponse.json({ 
+          error: aiResult.error || 'Failed to analyze notes' 
+        }, { status: 500 })
+      }
+
+      return NextResponse.json({
+        success: true,
+        correctedNotes: aiResult.annotatedNotes,
+      })
+    }
+
+    // Otherwise, require uploadId for the original flow
     if (!uploadId) {
-      return NextResponse.json({ error: 'Upload ID required' }, { status: 400 })
+      return NextResponse.json({ error: 'Upload ID or notes required' }, { status: 400 })
     }
 
     // Get current user

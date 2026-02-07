@@ -26,6 +26,7 @@ export default function NotesPage() {
   const [summary, setSummary] = useState('')
   const [showSummary, setShowSummary] = useState(false)
   const [isSummarizing, setIsSummarizing] = useState(false)
+  const [isCorrecting, setIsCorrecting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -228,6 +229,44 @@ export default function NotesPage() {
     }
   }
 
+  // Handle AI correction - analyzes and corrects notes
+  const handleCorrection = async () => {
+    if (!content.trim()) {
+      alert('Please write some notes first!')
+      return
+    }
+
+    setIsCorrecting(true)
+    try {
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          notes: content,
+          subject: subjectName,
+        }),
+      })
+
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to analyze notes')
+      }
+
+      // Replace content with corrected version
+      setContent(data.correctedNotes)
+      // Switch to preview mode to show the formatted result
+      setShowPreview(true)
+      // Save to localStorage
+      localStorage.setItem(storageKey, data.correctedNotes)
+    } catch (error) {
+      console.error('Correction error:', error)
+      alert(error instanceof Error ? error.message : 'Failed to correct notes')
+    } finally {
+      setIsCorrecting(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -279,6 +318,23 @@ export default function NotesPage() {
                   <>
                     <Icon name="zap" size={16} />
                     Summarize
+                  </>
+                )}
+              </button>
+              <button
+                onClick={handleCorrection}
+                disabled={isCorrecting || !content.trim()}
+                className="px-4 py-2 bg-green-100 text-green-900 border border-green-300 rounded hover:bg-green-200 font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {isCorrecting ? (
+                  <>
+                    <Icon name="loader" size={16} className="animate-spin" />
+                    Correcting...
+                  </>
+                ) : (
+                  <>
+                    <Icon name="check" size={16} />
+                    AI Correct
                   </>
                 )}
               </button>
