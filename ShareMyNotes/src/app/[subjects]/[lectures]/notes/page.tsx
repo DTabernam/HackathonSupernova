@@ -470,6 +470,8 @@ export default function NotesPage() {
                   const html = target.innerHTML
                   // Convert HTML back to markdown-like content
                   let text = html
+                    // Remove AI comments (spans with ai-comment class or text in brackets)
+                    .replace(/<span[^>]*class="ai-comment"[^>]*>.*?<\/span>/gi, '')
                     // Headers
                     .replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n\n')
                     .replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1\n\n')
@@ -493,6 +495,8 @@ export default function NotesPage() {
                     .replace(/<a[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/gi, '[$2]($1)')
                     // Remove remaining HTML tags
                     .replace(/<[^>]+>/g, '')
+                    // Remove AI comments in text form [text in brackets]
+                    .replace(/\s*\[[^\]]*\]\s*/g, ' ')
                     // Decode HTML entities
                     .replace(/&nbsp;/g, ' ')
                     .replace(/&amp;/g, '&')
