@@ -445,19 +445,26 @@ export default function NotesPage() {
                 }
                 .ai-error, .preview-content .error {
                   color: #dc2626;
-                  text-decoration: underline;
-                  text-decoration-style: dashed;
-                  text-decoration-color: #dc2626;
-                  text-underline-offset: 3px;
+                  text-decoration: none;
+                  border-bottom: 2px dashed #dc2626;
                   background-color: #fef2f2;
-                  padding: 0 4px;
+                  padding: 0 4px 2px 4px;
                   border-radius: 2px;
                 }
                 .preview-content del, .preview-content s {
                   color: #dc2626;
-                  text-decoration: line-through;
-                  text-decoration-style: dashed;
-                  text-decoration-color: #dc2626;
+                  text-decoration: none;
+                  border-bottom: 2px dashed #dc2626;
+                  background: repeating-linear-gradient(
+                    90deg,
+                    #dc2626 0px,
+                    #dc2626 4px,
+                    transparent 4px,
+                    transparent 8px
+                  );
+                  background-size: 100% 2px;
+                  background-position: 0 100%;
+                  background-repeat: no-repeat;
                 }
               `}</style>
               <div 
