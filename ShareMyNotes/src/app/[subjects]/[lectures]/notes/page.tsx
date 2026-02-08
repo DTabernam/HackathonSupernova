@@ -282,7 +282,7 @@ export default function NotesPage() {
                 <Icon name="chevron-right" size={14} />
                 <span>{lectureName}</span>
               </div>
-              <h1 className="text-3xl font-bold text-text-primary">My Notes</h1>
+              <h1 className="text-3xl font-bold text-text-primary">{subjectName}: {lectureName}</h1>
             </div>
 
             <div className="flex gap-2">
@@ -440,6 +440,22 @@ export default function NotesPage() {
                   border-radius: 4px;
                   margin-left: 4px;
                   border: 1px dashed #f59e0b;
+                }
+                .ai-error, .preview-content .error {
+                  color: #dc2626;
+                  text-decoration: underline;
+                  text-decoration-style: dashed;
+                  text-decoration-color: #dc2626;
+                  text-underline-offset: 3px;
+                  background-color: #fef2f2;
+                  padding: 0 4px;
+                  border-radius: 2px;
+                }
+                .preview-content del, .preview-content s {
+                  color: #dc2626;
+                  text-decoration: line-through;
+                  text-decoration-style: dashed;
+                  text-decoration-color: #dc2626;
                 }
               `}</style>
               <div className="preview-content prose max-w-none h-screen overflow-y-auto">
