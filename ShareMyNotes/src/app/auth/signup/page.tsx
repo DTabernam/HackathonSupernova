@@ -59,7 +59,8 @@ export default function SignUpPage() {
   const handleGoogleSignUp = async () => {
     try {
       const supabase = createClient()
-      const redirectUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+      // Use current origin to handle both localhost and production
+      const redirectUrl = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000')
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
