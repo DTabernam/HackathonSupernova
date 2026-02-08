@@ -31,6 +31,7 @@ export default function NotesPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const previewRef = useRef<HTMLDivElement>(null)
+  const previewContentRef = useRef<string>('')
 
   const subjectName = subject.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
   const lectureName = lecture.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
@@ -465,7 +466,7 @@ export default function NotesPage() {
                 contentEditable={true}
                 suppressContentEditableWarning={true}
                 onInput={(e) => {
-                  // Get the text content and preserve basic formatting
+                  // Store changes in ref without re-rendering (prevents cursor jump)
                   const target = e.currentTarget
                   const html = target.innerHTML
                   // Convert HTML back to markdown-like content
@@ -506,7 +507,14 @@ export default function NotesPage() {
                     // Clean up extra whitespace
                     .replace(/\n{3,}/g, '\n\n')
                     .trim()
-                  setContent(text)
+                  // Store in ref (no re-render)
+                  previewContentRef.current = text
+                }}
+                onBlur={() => {
+                  // Update state only when user leaves the preview (no cursor issues)
+                  if (previewContentRef.current && previewContentRef.current !== content) {
+                    setContent(previewContentRef.current)
+                  }
                 }}
               >
                 <ReactMarkdown
