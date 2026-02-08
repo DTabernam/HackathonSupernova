@@ -63,10 +63,10 @@ export default function SubjectLecturesPage() {
         </p>
 
         {/* Lectures Grid */}
-        <div className="grid grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
           {lectures.map((lecture, index) => (
-            <Link key={index} href={`/${subject}/lecture-${index + 1}`}>
-              <Button variant="subjects" size="subj">
+            <Link key={index} href={`/${subject}/lecture-${index + 1}`} className="w-full">
+              <Button variant="subjects" size="subj" className="w-full">
                 {lecture}
               </Button>
             </Link>

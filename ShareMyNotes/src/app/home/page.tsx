@@ -191,10 +191,10 @@ export default function SubjectsPage() {
           <h2 className="text-1xl font-light mb-5 text-center align-text-bottom text-text-secondary">
            to start taking notes!
           </h2>
-          <div className="grid grid-cols-3 gap-8 justify-items-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8 justify-items-center">
             {subjects.map((subject) => (
-              <Link key={subject.slug} href={`/${subject.slug}`}>
-                <Button variant="subjects" size="subj" color='accent-blue'>
+              <Link key={subject.slug} href={`/${subject.slug}`} className="w-full">
+                <Button variant="subjects" size="subj" color='accent-blue' className="w-full">
                   {subject.name}
                 </Button>
               </Link>

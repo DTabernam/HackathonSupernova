@@ -22,7 +22,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       sm: 'px-3 py-1.5 text-sm',
       md: 'px-4 py-2.5 text-base',
       lg: 'px-6 py-3 text-lg',
-      subj: 'px-6 py-3 text-lg w-64 h-40',
+      subj: 'px-4 sm:px-6 py-3 text-base sm:text-lg min-h-[120px] sm:min-h-[140px] md:min-h-[160px]',
     }
 
     return (
