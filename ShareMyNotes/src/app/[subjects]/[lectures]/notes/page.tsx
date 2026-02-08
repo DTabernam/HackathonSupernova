@@ -30,6 +30,7 @@ export default function NotesPage() {
   const [hasLoadedFromDb, setHasLoadedFromDb] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const previewRef = useRef<HTMLDivElement>(null)
 
   const subjectName = subject.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
   const lectureName = lecture.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
@@ -458,7 +459,52 @@ export default function NotesPage() {
                   text-decoration-color: #dc2626;
                 }
               `}</style>
-              <div className="preview-content prose max-w-none h-screen overflow-y-auto">
+              <div 
+                ref={previewRef}
+                className="preview-content prose max-w-none h-screen overflow-y-auto focus:outline-none cursor-text"
+                contentEditable={true}
+                suppressContentEditableWarning={true}
+                onInput={(e) => {
+                  // Get the text content and preserve basic formatting
+                  const target = e.currentTarget
+                  const html = target.innerHTML
+                  // Convert HTML back to markdown-like content
+                  let text = html
+                    // Headers
+                    .replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n\n')
+                    .replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1\n\n')
+                    .replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1\n\n')
+                    // Bold and italic
+                    .replace(/<strong[^>]*>(.*?)<\/strong>/gi, '**$1**')
+                    .replace(/<em[^>]*>(.*?)<\/em>/gi, '*$1*')
+                    .replace(/<b[^>]*>(.*?)<\/b>/gi, '**$1**')
+                    .replace(/<i[^>]*>(.*?)<\/i>/gi, '*$1*')
+                    // Lists
+                    .replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n')
+                    .replace(/<ul[^>]*>|<\/ul>/gi, '\n')
+                    .replace(/<ol[^>]*>|<\/ol>/gi, '\n')
+                    // Paragraphs and breaks
+                    .replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n')
+                    .replace(/<br\s*\/?>/gi, '\n')
+                    .replace(/<div[^>]*>(.*?)<\/div>/gi, '$1\n')
+                    // Code
+                    .replace(/<code[^>]*>(.*?)<\/code>/gi, '`$1`')
+                    // Links
+                    .replace(/<a[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/gi, '[$2]($1)')
+                    // Remove remaining HTML tags
+                    .replace(/<[^>]+>/g, '')
+                    // Decode HTML entities
+                    .replace(/&nbsp;/g, ' ')
+                    .replace(/&amp;/g, '&')
+                    .replace(/&lt;/g, '<')
+                    .replace(/&gt;/g, '>')
+                    .replace(/&quot;/g, '"')
+                    // Clean up extra whitespace
+                    .replace(/\n{3,}/g, '\n\n')
+                    .trim()
+                  setContent(text)
+                }}
+              >
                 <ReactMarkdown
                   remarkPlugins={[remarkMath]}
                   rehypePlugins={[rehypeRaw, rehypeKatex]}
