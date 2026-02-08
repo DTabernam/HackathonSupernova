@@ -27,6 +27,7 @@ export default function NotesPage() {
   const [showSummary, setShowSummary] = useState(false)
   const [isSummarizing, setIsSummarizing] = useState(false)
   const [isCorrecting, setIsCorrecting] = useState(false)
+  const [hasLoadedFromDb, setHasLoadedFromDb] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -58,6 +59,8 @@ export default function NotesPage() {
           if (data?.content) {
             setContent(data.content)
             localStorage.setItem(storageKey, data.content)
+            setHasLoadedFromDb(true)
+            setShowPreview(true) // Auto-switch to preview when loading existing note
           }
         }
       } catch (e) {
@@ -376,17 +379,67 @@ export default function NotesPage() {
             <div className="bg-white rounded-lg border-2 border-gray-300 overflow-hidden shadow-lg p-6">
               <style>{`
                 .preview-content {
-                  font-size: 1.2rem;
-                  line-height: 1.8;
+                  font-size: 1.15rem;
+                  line-height: 1.9;
+                  font-family: 'Georgia', 'Times New Roman', serif;
+                }
+                .preview-content h1 {
+                  border-bottom: 3px dashed #3b82f6;
+                  padding-bottom: 0.5rem;
+                  margin-bottom: 1.5rem;
+                }
+                .preview-content h2 {
+                  border-bottom: 2px dashed #6366f1;
+                  padding-bottom: 0.4rem;
+                  margin-bottom: 1.25rem;
+                }
+                .preview-content h3 {
+                  border-bottom: 2px dotted #8b5cf6;
+                  padding-bottom: 0.3rem;
+                  margin-bottom: 1rem;
+                }
+                .preview-content p {
+                  text-align: justify;
+                  margin-bottom: 1.25rem;
+                }
+                .preview-content strong {
+                  color: #1e40af;
+                  text-decoration: underline;
+                  text-decoration-style: dashed;
+                  text-underline-offset: 3px;
+                }
+                .preview-content em {
+                  color: #6b21a8;
+                  font-style: italic;
+                }
+                .preview-content ul, .preview-content ol {
+                  margin-left: 1.5rem;
+                  margin-bottom: 1.25rem;
+                }
+                .preview-content li {
+                  margin-bottom: 0.5rem;
+                  position: relative;
+                }
+                .preview-content li::marker {
+                  color: #3b82f6;
+                }
+                .preview-content blockquote {
+                  border-left: 4px dashed #a78bfa;
+                  padding-left: 1rem;
+                  margin: 1.5rem 0;
+                  font-style: italic;
+                  color: #4b5563;
+                  background: linear-gradient(90deg, #f5f3ff 0%, transparent 100%);
                 }
                 .ai-comment {
                   color: #374151 !important;
                   font-style: italic !important;
                   font-size: 0.75em !important;
-                  background-color: #f3f4f6;
-                  padding: 2px 6px;
+                  background-color: #fef3c7;
+                  padding: 2px 8px;
                   border-radius: 4px;
                   margin-left: 4px;
+                  border: 1px dashed #f59e0b;
                 }
               `}</style>
               <div className="preview-content prose max-w-none h-screen overflow-y-auto">
@@ -394,10 +447,10 @@ export default function NotesPage() {
                   remarkPlugins={[remarkMath]}
                   rehypePlugins={[rehypeRaw, rehypeKatex]}
                   components={{
-                    p: ({ ...props }) => <p className="text-text-primary mb-4" {...props} />,
-                    h1: ({ ...props }) => <h1 className="text-4xl font-bold text-text-primary mb-4" {...props} />,
-                    h2: ({ ...props }) => <h2 className="text-3xl font-bold text-text-primary mb-3" {...props} />,
-                    h3: ({ ...props }) => <h3 className="text-2xl font-bold text-text-primary mb-2" {...props} />,
+                    p: ({ ...props }) => <p className="text-gray-700" {...props} />,
+                    h1: ({ ...props }) => <h1 className="text-3xl font-bold text-gray-900 tracking-tight" {...props} />,
+                    h2: ({ ...props }) => <h2 className="text-2xl font-semibold text-gray-800" {...props} />,
+                    h3: ({ ...props }) => <h3 className="text-xl font-semibold text-gray-700" {...props} />,
                     code: ({ className, children, ...props }) => {
                       const isInline = !className
                       return isInline 
